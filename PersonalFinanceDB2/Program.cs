@@ -10,18 +10,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using PersonalFinanceDB2;
 
+
+
 namespace PersonalFinanceDB2
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            string filePath = "E:\\Projects\\PersonalFinance\\3Receipts.csv";
-            //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptLidl.csv";
+
+
+            //string filePath = "E:\\Projects\\PersonalFinance\\3Receipts.csv";
+            string filePath = "E:\\Projects\\PersonalFinance\\ReceiptLidl.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptTesco.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptPenneys.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\WrongReceiptPenneys.csv";
-            FinanceDb.AddFullReceipt(filePath);
+            //FinanceDb.AddReceiptByConsole();
+            FinanceDb.AddReceiptByCSV(filePath);
         }
     }
 }

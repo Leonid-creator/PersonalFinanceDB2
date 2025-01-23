@@ -8,11 +8,58 @@ using System.Threading.Tasks;
 using CsvHelper;
 using CsvHelper.Configuration;
 
+
 namespace PersonalFinanceDB2
 {
     public class FinanceDb
     {
-        public static void AddFullReceipt(string filePath)
+        public static void AddReceiptByConsole()
+        {
+            TempReceipt tempReceipt = new TempReceipt();
+            List<TempDetails> tempDetails = new List<TempDetails>();
+
+            tempReceipt = EnterTempReceipt();
+            while (true)
+            {
+                tempDetails.Add(EnterTempDetails());
+                Console.WriteLine("New product?");
+                if (Console.ReadLine() == "n")
+                {
+                    break;
+                }
+            }
+            while (true)
+            {
+                Console.WriteLine("Check data:");
+                ShowReceiptData(tempReceipt, tempDetails);
+                Console.WriteLine("Save data?");
+                Console.WriteLine("y/n or e (edit)");
+                string action = Console.ReadLine();
+                if (action == "y")
+                {
+                    AddReceipt(tempReceipt, tempDetails);
+                    break;
+                }else if (action == "n")
+                {
+                    Console.WriteLine("Adding check interrupted");
+                    break;
+                }
+                else if (action == "e")
+                {
+                    Console.WriteLine("which line?");
+                    int line = int.Parse(Console.ReadLine());
+                    if (line == 1)
+                    {
+                        tempReceipt = EnterTempReceipt();
+                    }
+                    else
+                    {
+                        tempDetails[line - 2] = EnterTempDetails();
+                    }
+                }
+            }
+        }
+        public static void AddReceiptByCSV(string filePath)
         {
             using (var dbContext = new PersonalFinanceDbContext())
             {
@@ -29,6 +76,7 @@ namespace PersonalFinanceDB2
                         var reader = new StreamReader(filePath);
                         var csv = new CsvReader(reader, config);
                         Receipt newReceipt = new Receipt();
+                        int receiptID = 0;
 
                         csv.Read();
                         while (csv.Read())
@@ -47,12 +95,24 @@ namespace PersonalFinanceDB2
                             if (isReadingReceiptInfo)
                             {
                                 isReadingReceiptInfo = false;
-                                newReceipt = FinanceDb.AddBriefReceipt(dbContext, fields);
+                                TempReceipt tempReceipt = new TempReceipt
+                                {
+                                    StoreName = fields[0],
+                                    DateTime = fields[1],
+                                    TotalAmount = fields[2]
+                                };
+                                receiptID = AddBriefReceiptInfo(dbContext, tempReceipt);
                                 Console.WriteLine($"new receipt ({fields[0]})");          //just for test, delete it
                             }
                             else
                             {
-                                FinanceDb.AddPurchaseDetails(dbContext, fields, newReceipt.ReceiptID);
+                                TempDetails tempDetails = new TempDetails
+                                {
+                                    ProductName = fields[0],
+                                    Quantity = fields[1],
+                                    Amount = fields[2]
+                                };
+                                AddPurchaseDetails(dbContext, tempDetails, receiptID);
                                 Console.WriteLine($"new detail ({fields[0]})");          //just for test, delete it
                             }
                         }
@@ -67,27 +127,80 @@ namespace PersonalFinanceDB2
                 }
             }
         }
-        public static Receipt AddBriefReceipt(PersonalFinanceDbContext dbContext, string[] fields)
+        public static TempReceipt EnterTempReceipt()
         {
-            string storeName = fields[0];
-            DateTime dateTime = Convert.ToDateTime(fields[1]);
-            decimal totalAmount = decimal.Parse(fields[2]);
-
-            Store store = dbContext.Stores.FirstOrDefault(s => s.Name == storeName);
+            TempReceipt tempReceipt = new TempReceipt();
+            Console.WriteLine("Store name:");
+            tempReceipt.StoreName = Console.ReadLine();
+            Console.WriteLine("Date and time:");
+            tempReceipt.DateTime = Console.ReadLine();
+            Console.WriteLine("Total amount:");
+            tempReceipt.TotalAmount = Console.ReadLine();
+            return tempReceipt;
+        }
+        public static TempDetails EnterTempDetails()
+        {
+            TempDetails tempDetails = new TempDetails();
+            Console.WriteLine("Product name:");
+            tempDetails.ProductName = Console.ReadLine();
+            Console.WriteLine("Quantity:");
+            tempDetails.Quantity = Console.ReadLine();
+            Console.WriteLine("Amount:");
+            tempDetails.Amount = Console.ReadLine();
+            return tempDetails;
+        }
+        public static void ShowReceiptData(TempReceipt tempReceipt, List<TempDetails> tempDetails)
+        {
+            Console.WriteLine($"\tStore name: {tempReceipt.StoreName}");
+            Console.WriteLine($"\tDate and time: {tempReceipt.DateTime}");
+            Console.WriteLine($"\tTotal amount: {tempReceipt.TotalAmount}");
+            foreach (var item in tempDetails)
+            {
+                Console.WriteLine($"\tProduct name: {item.ProductName} | Quantity: {item.Quantity} | Amount: {item.Amount}");
+            }
+        }
+        public static void AddReceipt(TempReceipt tempReceipt, List<TempDetails> tempDetails)
+        {
+            using (var dbContext = new PersonalFinanceDbContext())
+            {
+                using (var transaction = dbContext.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        int receiptID = AddBriefReceiptInfo(dbContext, tempReceipt);
+                        for(int i = 0; i < tempDetails.Count; i++)
+                        {
+                            AddPurchaseDetails(dbContext, tempDetails[i], receiptID);
+                        }
+                        dbContext.SaveChanges();
+                        transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("transaction.Rollback");          //just for test, delete it
+                        Console.WriteLine(ex);
+                        transaction.Rollback();
+                    }
+                }
+            }
+        }
+        public static int AddBriefReceiptInfo(PersonalFinanceDbContext dbContext, TempReceipt tempReceipt)
+        {
+            Store store = dbContext.Stores.FirstOrDefault(s => s.Name == tempReceipt.StoreName);
             if (store == null)
             {
-                store = AddStore(dbContext, storeName);
+                store = AddStore(dbContext, tempReceipt.StoreName);
             }
 
             Receipt newReceipt = new Receipt()
             {
                 StoreID = store.StoreID,
-                DateTime = dateTime,
-                TotalAmount = totalAmount
+                DateTime = Convert.ToDateTime(tempReceipt.DateTime),
+                TotalAmount = decimal.Parse(tempReceipt.TotalAmount)
             };
             var existingReceipt = dbContext.Receipts.FirstOrDefault(r => r.StoreID == store.StoreID
-                                                                    && r.DateTime == dateTime
-                                                                    && r.TotalAmount == totalAmount);
+                                                                    && r.DateTime == newReceipt.DateTime
+                                                                    && r.TotalAmount == newReceipt.TotalAmount);
 
             if(existingReceipt == null)
             {
@@ -98,32 +211,26 @@ namespace PersonalFinanceDB2
             {
                 Console.WriteLine("This receipt already exist");
             }
-            return newReceipt;
+            return newReceipt.StoreID;
         }
-
-        public static void AddPurchaseDetails(PersonalFinanceDbContext dbContext, string[] fields, int receiptID)
+        public static void AddPurchaseDetails(PersonalFinanceDbContext dbContext, TempDetails tempDetails, int receiptID)
         {
-            string productName = fields[0];
-            int quantity = int.Parse(fields[1]);
-            decimal amount = decimal.Parse(fields[2]);
-            
-            Product product = dbContext.Products.FirstOrDefault(s => s.Name == productName);
+            Product product = dbContext.Products.FirstOrDefault(s => s.Name == tempDetails.ProductName);
             if (product == null)
             {
-                product = AddProduct(dbContext, productName);
+                product = AddProduct(dbContext, tempDetails.ProductName);
             }
 
             PurchaseDetail newPurchaseDetail = new PurchaseDetail
             {
                 ReceiptID = receiptID,
                 ProductID = product.ProductID,
-                Quantity = quantity,
-                Amount = amount
+                Quantity = int.Parse(tempDetails.Quantity),
+                Amount = decimal.Parse(tempDetails.Amount)
             };
             dbContext.PurchaseDetails.Add(newPurchaseDetail);
             dbContext.SaveChanges();
         }
-
         public static Store AddStore(PersonalFinanceDbContext dbContext, string storeName)
         {
             Store newStore = new Store { Name = storeName };
