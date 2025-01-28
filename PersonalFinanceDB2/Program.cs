@@ -18,10 +18,8 @@ namespace PersonalFinanceDB2
     {
         public static void Main(string[] args)
         {
-
-
-            //string filePath = "E:\\Projects\\PersonalFinance\\3Receipts.csv";
-            string filePath = "E:\\Projects\\PersonalFinance\\ReceiptLidl.csv";
+            string filePath = "E:\\Projects\\PersonalFinance\\3Receipts.csv";
+            //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptLidl.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptTesco.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptPenneys.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\WrongReceiptPenneys.csv";

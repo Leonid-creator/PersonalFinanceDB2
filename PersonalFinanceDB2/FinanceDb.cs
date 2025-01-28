@@ -112,7 +112,7 @@ namespace PersonalFinanceDB2
                                     Quantity = fields[1],
                                     Amount = fields[2]
                                 };
-                                AddPurchaseDetails(dbContext, tempDetails, receiptID);
+                                AddPurchaseDetail(dbContext, tempDetails, receiptID);
                                 Console.WriteLine($"new detail ({fields[0]})");          //just for test, delete it
                             }
                         }
@@ -130,24 +130,23 @@ namespace PersonalFinanceDB2
         public static TempReceipt EnterTempReceipt()
         {
             TempReceipt tempReceipt = new TempReceipt();
-            Console.WriteLine("Store name:");
-            tempReceipt.StoreName = Console.ReadLine();
-            Console.WriteLine("Date and time:");
-            tempReceipt.DateTime = Console.ReadLine();
-            Console.WriteLine("Total amount:");
-            tempReceipt.TotalAmount = Console.ReadLine();
+            tempReceipt.StoreName = GetInput("Store name:");
+            tempReceipt.DateTime = GetInput("Date and time:");
+            tempReceipt.TotalAmount = GetInput("Total amount:");
             return tempReceipt;
         }
         public static TempDetails EnterTempDetails()
         {
             TempDetails tempDetails = new TempDetails();
-            Console.WriteLine("Product name:");
-            tempDetails.ProductName = Console.ReadLine();
-            Console.WriteLine("Quantity:");
-            tempDetails.Quantity = Console.ReadLine();
-            Console.WriteLine("Amount:");
-            tempDetails.Amount = Console.ReadLine();
+            tempDetails.ProductName = GetInput("Product name:");
+            tempDetails.Quantity = GetInput("Quantity:");
+            tempDetails.Amount = GetInput("Amount:");
             return tempDetails;
+        }
+        public static string GetInput(string message)
+        {
+            Console.WriteLine(message);
+            return Console.ReadLine();
         }
         public static void ShowReceiptData(TempReceipt tempReceipt, List<TempDetails> tempDetails)
         {
@@ -170,7 +169,7 @@ namespace PersonalFinanceDB2
                         int receiptID = AddBriefReceiptInfo(dbContext, tempReceipt);
                         for(int i = 0; i < tempDetails.Count; i++)
                         {
-                            AddPurchaseDetails(dbContext, tempDetails[i], receiptID);
+                            AddPurchaseDetail(dbContext, tempDetails[i], receiptID);
                         }
                         dbContext.SaveChanges();
                         transaction.Commit();
@@ -211,9 +210,9 @@ namespace PersonalFinanceDB2
             {
                 Console.WriteLine("This receipt already exist");
             }
-            return newReceipt.StoreID;
+            return newReceipt.ReceiptID;
         }
-        public static void AddPurchaseDetails(PersonalFinanceDbContext dbContext, TempDetails tempDetails, int receiptID)
+        public static void AddPurchaseDetail(PersonalFinanceDbContext dbContext, TempDetails tempDetails, int receiptID)
         {
             Product product = dbContext.Products.FirstOrDefault(s => s.Name == tempDetails.ProductName);
             if (product == null)

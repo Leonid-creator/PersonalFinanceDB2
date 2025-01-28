@@ -34,7 +34,8 @@ namespace PersonalFinanceDB2
             modelBuilder.Entity<Receipt>()
                 .HasOne(r => r.Store)
                 .WithMany(s => s.Receipts)
-                .HasForeignKey(r => r.StoreID);
+                .HasForeignKey(r => r.StoreID)
+                .OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<Receipt>()
                 .Property(r => r.Comment)
                 .IsRequired(false);
@@ -43,17 +44,20 @@ namespace PersonalFinanceDB2
             modelBuilder.Entity<PurchaseDetail>()
                 .HasOne(pd => pd.Receipt)
                 .WithMany(r => r.PurchaseDetails)
-                .HasForeignKey(pd => pd.ReceiptID);
+                .HasForeignKey(pd => pd.ReceiptID)
+                .OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<PurchaseDetail>()
                 .HasOne(pd => pd.Product)
                 .WithMany(p => p.PurchaseDetails)
-                .HasForeignKey(pd => pd.ProductID);
+                .HasForeignKey(pd => pd.ProductID)
+                .OnDelete(DeleteBehavior.NoAction);
 
             //Product
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
-                .HasForeignKey(p => p.CategoryID);
+                .HasForeignKey(p => p.CategoryID)
+                .OnDelete(DeleteBehavior.SetNull);
             modelBuilder.Entity<Product>()
                 .Property(p => p.CategoryID)
                 .IsRequired(false);
