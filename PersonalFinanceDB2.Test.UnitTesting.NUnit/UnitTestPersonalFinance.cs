@@ -1,12 +1,11 @@
+using NUnit.Framework;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+
 namespace PersonalFinanceDB2.Test.UnitTesting.NUnit
 {
     public class Tests
     {
-        [SetUp]
-        public void Setup()
-        {
-        }
-
         [Test]
         public void Test1()
         {

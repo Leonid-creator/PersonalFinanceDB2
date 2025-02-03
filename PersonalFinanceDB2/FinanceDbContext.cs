@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,10 @@ namespace PersonalFinanceDB2
 {
     public class PersonalFinanceDbContext : DbContext
     {
+        private readonly string _connectionString;
+
+        public PersonalFinanceDbContext(DbContextOptions<PersonalFinanceDbContext> options) : base(options) { }
+        public PersonalFinanceDbContext() { }
         public DbSet<Receipt> Receipts{ get; set; }
         public DbSet<Store> Stores{ get; set; }
         public DbSet<PurchaseDetail> PurchaseDetails{ get; set; }
@@ -17,11 +22,14 @@ namespace PersonalFinanceDB2
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;" +
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;" +
                 "AttachDbFileName=C:\\Users\\lenin\\source\\repos\\Leonid-creator\\PersonalFinanceDB2\\PersonalFinanceDB2\\PersonalFinanceDB2\\PersonalFinanceDB2.mdf;" +
                 "Database=personalFinanceDB2;Trusted_Connection=True;");
+            }
         }
-
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Receipt>().HasKey(r => r.ReceiptID);
