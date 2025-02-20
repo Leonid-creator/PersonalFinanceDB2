@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PersonalFinanceDB2
+namespace PersonalFinanceDB2.Data
 {
     public class Store
     {

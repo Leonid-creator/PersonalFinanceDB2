@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using PersonalFinanceDB2;
+using PersonalFinanceDB2.Data;
 
 #nullable disable
 
@@ -54,9 +54,15 @@ namespace PersonalFinanceDB2.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("SubcategoryID")
+                        .IsRequired()
+                        .HasColumnType("int");
+
                     b.HasKey("ProductID");
 
                     b.HasIndex("CategoryID");
+
+                    b.HasIndex("SubcategoryID");
 
                     b.ToTable("Products");
                 });
@@ -126,13 +132,44 @@ namespace PersonalFinanceDB2.Migrations
                     b.ToTable("Stores");
                 });
 
+            modelBuilder.Entity("PersonalFinanceDB2.Subcategory", b =>
+                {
+                    b.Property<int>("SubcategoryID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SubcategoryID"));
+
+                    b.Property<int>("CategoryID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SubcategoryID");
+
+                    b.HasIndex("CategoryID");
+
+                    b.ToTable("Subcategories");
+                });
+
             modelBuilder.Entity("PersonalFinanceDB2.Product", b =>
                 {
                     b.HasOne("PersonalFinanceDB2.Category", "Category")
                         .WithMany("Products")
-                        .HasForeignKey("CategoryID");
+                        .HasForeignKey("CategoryID")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("PersonalFinanceDB2.Subcategory", "Subcategory")
+                        .WithMany("Products")
+                        .HasForeignKey("SubcategoryID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.Navigation("Category");
+
+                    b.Navigation("Subcategory");
                 });
 
             modelBuilder.Entity("PersonalFinanceDB2.PurchaseDetail", b =>
@@ -159,15 +196,28 @@ namespace PersonalFinanceDB2.Migrations
                     b.HasOne("PersonalFinanceDB2.Store", "Store")
                         .WithMany("Receipts")
                         .HasForeignKey("StoreID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Store");
                 });
 
+            modelBuilder.Entity("PersonalFinanceDB2.Subcategory", b =>
+                {
+                    b.HasOne("PersonalFinanceDB2.Category", "Category")
+                        .WithMany("Subcategories")
+                        .HasForeignKey("CategoryID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("PersonalFinanceDB2.Category", b =>
                 {
                     b.Navigation("Products");
+
+                    b.Navigation("Subcategories");
                 });
 
             modelBuilder.Entity("PersonalFinanceDB2.Product", b =>
@@ -183,6 +233,11 @@ namespace PersonalFinanceDB2.Migrations
             modelBuilder.Entity("PersonalFinanceDB2.Store", b =>
                 {
                     b.Navigation("Receipts");
+                });
+
+            modelBuilder.Entity("PersonalFinanceDB2.Subcategory", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

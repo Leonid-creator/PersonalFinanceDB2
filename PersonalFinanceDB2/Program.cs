@@ -18,14 +18,21 @@ namespace PersonalFinanceDB2
     {
         public static void Main(string[] args)
         {
+            ReceiptProcessor receiptProcessor = new ReceiptProcessor();
+
+            receiptProcessor.CreateReceiptByConsole();
+
             //string filePath = "E:\\Projects\\PersonalFinance\\3Receipts.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptLidl.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptTesco.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptPenneys.csv";
             //string filePath = "E:\\Projects\\PersonalFinance\\WrongReceiptPenneys.csv";
-            FinanceDb.AddReceiptByConsole();
-            //FinanceDb.AddReceiptByCSV(filePath);
+            //FinanceDb.CreateReceiptByCSV(filePath);
 
         }
     }
 }
+
+//to do:
+//1. Rebuild CreateReceiptByCSV() method
+//

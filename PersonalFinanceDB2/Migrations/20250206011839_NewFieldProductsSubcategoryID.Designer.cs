@@ -12,8 +12,8 @@ using PersonalFinanceDB2.Data;
 namespace PersonalFinanceDB2.Migrations
 {
     [DbContext(typeof(PersonalFinanceDbContext))]
-    [Migration("20250128224837_ChangeDeleteBehaviorAllFK")]
-    partial class ChangeDeleteBehaviorAllFK
+    [Migration("20250206011839_NewFieldProductsSubcategoryID")]
+    partial class NewFieldProductsSubcategoryID
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,6 +56,9 @@ namespace PersonalFinanceDB2.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SubcategoryID")
+                        .HasColumnType("int");
 
                     b.HasKey("ProductID");
 
@@ -129,11 +132,32 @@ namespace PersonalFinanceDB2.Migrations
                     b.ToTable("Stores");
                 });
 
+            modelBuilder.Entity("PersonalFinanceDB2.Subcategory", b =>
+                {
+                    b.Property<int>("SubcategoryID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SubcategoryID"));
+
+                    b.Property<int>("CategoryID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SubcategoryID");
+
+                    b.ToTable("Subcategories");
+                });
+
             modelBuilder.Entity("PersonalFinanceDB2.Product", b =>
                 {
                     b.HasOne("PersonalFinanceDB2.Category", "Category")
                         .WithMany("Products")
-                        .HasForeignKey("CategoryID");
+                        .HasForeignKey("CategoryID")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Category");
                 });
@@ -162,7 +186,7 @@ namespace PersonalFinanceDB2.Migrations
                     b.HasOne("PersonalFinanceDB2.Store", "Store")
                         .WithMany("Receipts")
                         .HasForeignKey("StoreID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Store");

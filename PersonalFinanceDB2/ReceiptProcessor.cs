@@ -8,20 +8,26 @@ using System.Threading.Tasks;
 using System.Transactions;
 using CsvHelper;
 using CsvHelper.Configuration;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using PersonalFinanceDB2.Data;
 
 namespace PersonalFinanceDB2
 {
-    public class FinanceDb
+    public class ReceiptProcessor
     {
-        public static void AddReceiptByConsole()
+        public TempReceipt TempReceipt { get; set; }
+        public List<TempDetails> TempDetails { get; set; }
+        public ReceiptProcessor()
         {
-            TempReceipt tempReceipt = new TempReceipt();
-            List<TempDetails> tempDetails = new List<TempDetails>();
-
-            tempReceipt = EnterTempReceipt();
+            TempDetails = new List<TempDetails>();
+        }
+        public void CreateReceiptByConsole()
+        {
+            EnterTempReceipt();
             while (true)
             {
-                tempDetails.Add(EnterTempDetails());
+                TempDetails.Add(EnterTempDetails());
                 Console.WriteLine("New product?");
                 if (Console.ReadLine() == "n")
                 {
@@ -31,13 +37,14 @@ namespace PersonalFinanceDB2
             while (true)
             {
                 Console.WriteLine("Check data:");
-                ShowReceiptData(tempReceipt, tempDetails);
+                ShowReceiptData();
                 Console.WriteLine("Save data?");
                 Console.WriteLine("y/n or e (edit)");
                 string action = Console.ReadLine();
                 if (action == "y")
                 {
-                    ProcessReceipt(tempReceipt, tempDetails);
+                    CheckIfProductsExist();
+                    ProcessReceipt();
                     break;
                 }else if (action == "n")
                 {
@@ -50,16 +57,16 @@ namespace PersonalFinanceDB2
                     int line = int.Parse(Console.ReadLine());
                     if (line == 1)
                     {
-                        tempReceipt = EnterTempReceipt();
+                        EnterTempReceipt();
                     }
                     else
                     {
-                        tempDetails[line - 2] = EnterTempDetails();
+                        TempDetails[line - 2] = EnterTempDetails();
                     }
                 }
             }
         }
-        public static void AddReceiptByCSV(string filePath)
+        public void CreateReceiptByCSV(string filePath)
         {
             using (var dbContext = new PersonalFinanceDbContext())
             {
@@ -101,7 +108,7 @@ namespace PersonalFinanceDB2
                                     DateTime = fields[1],
                                     TotalAmount = fields[2]
                                 };
-                                receiptID = AddBriefReceiptInfo(dbContext, tempReceipt);
+                                //receiptID = FinanceRepository.AddBriefReceiptInfo(tempReceipt);
                                 Console.WriteLine($"new receipt ({fields[0]})");          //just for test, delete it
                             }
                             else
@@ -112,7 +119,7 @@ namespace PersonalFinanceDB2
                                     Quantity = fields[1],
                                     Amount = fields[2]
                                 };
-                                AddPurchaseDetail(dbContext, tempDetails, receiptID);
+                                //AddPurchaseDetail(dbContext, tempDetails, receiptID);
                                 Console.WriteLine($"new detail ({fields[0]})");          //just for test, delete it
                             }
                         }
@@ -127,13 +134,11 @@ namespace PersonalFinanceDB2
                 }
             }
         }
-        private static TempReceipt EnterTempReceipt()
+        private void EnterTempReceipt()
         {
-            TempReceipt tempReceipt = new TempReceipt();
-            tempReceipt.StoreName = GetInput("Store name:");
-            tempReceipt.DateTime = GetInput("Date and time:");
-            tempReceipt.TotalAmount = GetInput("Total amount:");
-            return tempReceipt;
+            TempReceipt.StoreName = GetInput("Store name:");
+            TempReceipt.DateTime = GetInput("Date and time:");
+            TempReceipt.TotalAmount = GetInput("Total amount:");
         }
         private static TempDetails EnterTempDetails()
         {
@@ -141,6 +146,11 @@ namespace PersonalFinanceDB2
             tempDetails.ProductName = GetInput("Product name:");
             tempDetails.Quantity = GetInput("Quantity:");
             tempDetails.Amount = GetInput("Amount:");
+            tempDetails.Category = GetInput("Category:");
+            if (tempDetails.Category != string.Empty)
+            {
+                tempDetails.Subcategory = GetInput("Subcategory:");
+            }
             return tempDetails;
         }
         private static string GetInput(string message)
@@ -148,17 +158,17 @@ namespace PersonalFinanceDB2
             Console.WriteLine(message);
             return Console.ReadLine();
         }
-        private static void ShowReceiptData(TempReceipt tempReceipt, List<TempDetails> tempDetails)
+        private void ShowReceiptData()
         {
-            Console.WriteLine($"\tStore name: {tempReceipt.StoreName}");
-            Console.WriteLine($"\tDate and time: {tempReceipt.DateTime}");
-            Console.WriteLine($"\tTotal amount: {tempReceipt.TotalAmount}");
-            foreach (var item in tempDetails)
+            Console.WriteLine($"\tStore name: {TempReceipt.StoreName}");
+            Console.WriteLine($"\tDate and time: {TempReceipt.DateTime}");
+            Console.WriteLine($"\tTotal amount: {TempReceipt.TotalAmount}");
+            foreach (var item in TempDetails)
             {
-                Console.WriteLine($"\tProduct name: {item.ProductName} | Quantity: {item.Quantity} | Amount: {item.Amount}");
+                Console.WriteLine($"\tProduct name: {item.ProductName} | Quantity: {item.Quantity} | Amount: {item.Amount} | Category: {item.Category} | Subcategory: {item.Subcategory}");
             }
         }
-        public static void ProcessReceipt(TempReceipt tempReceipt, List<TempDetails> tempDetails)
+        private void ProcessReceipt()
         {
             using (PersonalFinanceDbContext dbContext = new PersonalFinanceDbContext())
             {
@@ -166,87 +176,37 @@ namespace PersonalFinanceDB2
                 {
                     try
                     {
-                        AddFullReceipt(dbContext, tempReceipt, tempDetails);
+                        FinanceRepository financeRepository = new FinanceRepository(dbContext);
+                        financeRepository.AddFullReceipt(TempReceipt, TempDetails);
                         transaction.Commit();
                     }
-                    catch (Exception ex) 
+                    catch
                     {
-                        Console.WriteLine("transaction.Rollback");          //just for test, delete it
-                        Console.WriteLine(ex);
                         transaction.Rollback();
+                        throw new TransactionAbortedException("Transaction aborted");
                     }
                 }
             }
         }
-        public static void AddFullReceipt(PersonalFinanceDbContext dbContext, TempReceipt tempReceipt, List<TempDetails> tempDetails)
+        public void CheckIfProductsExist()
         {
-            int receiptID = AddBriefReceiptInfo(dbContext, tempReceipt);
-            for (int i = 0; i < tempDetails.Count; i++)
+            using (PersonalFinanceDbContext dbContext = new PersonalFinanceDbContext())
             {
-                AddPurchaseDetail(dbContext, tempDetails[i], receiptID);
+                for (int i = 0; i < TempDetails.Count; i++)
+                {
+                    if (dbContext.Products.FirstOrDefault(p => p.Name == TempDetails[i].ProductName) == null)
+                    {
+                        if (string.IsNullOrEmpty(TempDetails[i].Category) || string.IsNullOrEmpty(TempDetails[i].Subcategory))
+                        {
+                            Console.WriteLine($"Product \"{TempDetails[i].ProductName}\" not found in database");
+                            Console.WriteLine("Enter category name:");
+                            TempDetails[i].Category = Console.ReadLine();
+                            Console.WriteLine("Enter subcategory name:");
+                            TempDetails[i].Subcategory = Console.ReadLine();
+                        }
+                    }
+                }
             }
-            dbContext.SaveChanges();
-        }
-        private static int AddBriefReceiptInfo(PersonalFinanceDbContext dbContext, TempReceipt tempReceipt)
-        {
-            Store store = dbContext.Stores.FirstOrDefault(s => s.Name == tempReceipt.StoreName);
-            if (store == null)
-            {
-                store = AddStore(dbContext, tempReceipt.StoreName);
-            }
-
-            Receipt newReceipt = new Receipt()
-            {
-                StoreID = store.StoreID,
-                DateTime = Convert.ToDateTime(tempReceipt.DateTime),
-                TotalAmount = decimal.Parse(tempReceipt.TotalAmount)
-            };
-            var existingReceipt = dbContext.Receipts.FirstOrDefault(r => r.StoreID == store.StoreID
-                                                                    && r.DateTime == newReceipt.DateTime
-                                                                    && r.TotalAmount == newReceipt.TotalAmount);
-
-            if(existingReceipt == null)
-            {
-                dbContext.Receipts.Add(newReceipt);
-                dbContext.SaveChanges();
-            }
-            else
-            {
-                Console.WriteLine("This receipt already exist");
-            }
-            return newReceipt.ReceiptID;
-        }
-        private static void AddPurchaseDetail(PersonalFinanceDbContext dbContext, TempDetails tempDetails, int receiptID)
-        {
-            Product product = dbContext.Products.FirstOrDefault(s => s.Name == tempDetails.ProductName);
-            if (product == null)
-            {
-                product = AddProduct(dbContext, tempDetails.ProductName);
-            }
-
-            PurchaseDetail newPurchaseDetail = new PurchaseDetail
-            {
-                ReceiptID = receiptID,
-                ProductID = product.ProductID,
-                Quantity = int.Parse(tempDetails.Quantity),
-                Amount = decimal.Parse(tempDetails.Amount)
-            };
-            dbContext.PurchaseDetails.Add(newPurchaseDetail);
-            dbContext.SaveChanges();
-        }
-        private static Store AddStore(PersonalFinanceDbContext dbContext, string storeName)
-        {
-            Store newStore = new Store { Name = storeName };
-            dbContext.Stores.Add(newStore);
-            dbContext.SaveChanges();
-            return newStore;
-        }
-        private static Product AddProduct(PersonalFinanceDbContext dbContext, string productName)
-        {
-            Product newProduct = new Product { Name = productName };
-            dbContext.Products.Add(newProduct);
-            dbContext.SaveChanges();
-            return newProduct;
         }
     }
 }

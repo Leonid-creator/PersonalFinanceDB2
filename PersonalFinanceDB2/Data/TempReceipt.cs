@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PersonalFinanceDB2
+namespace PersonalFinanceDB2.Data
 {
     public class TempReceipt
     {

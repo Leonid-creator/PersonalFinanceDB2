@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PersonalFinanceDB2
+namespace PersonalFinanceDB2.Data
 {
     public class PurchaseDetail
     {

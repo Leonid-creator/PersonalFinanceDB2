@@ -6,19 +6,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PersonalFinanceDB2
+namespace PersonalFinanceDB2.Data
 {
     public class PersonalFinanceDbContext : DbContext
     {
         private readonly string _connectionString;
-
-        public PersonalFinanceDbContext(DbContextOptions<PersonalFinanceDbContext> options) : base(options) { }
         public PersonalFinanceDbContext() { }
-        public DbSet<Receipt> Receipts{ get; set; }
-        public DbSet<Store> Stores{ get; set; }
-        public DbSet<PurchaseDetail> PurchaseDetails{ get; set; }
-        public DbSet<Product> Products{ get; set; }
-        public DbSet<Category> Categories{ get; set; }
+        public PersonalFinanceDbContext(DbContextOptions<PersonalFinanceDbContext> options) : base(options) { }
+        public DbSet<Receipt> Receipts { get; set; }
+        public DbSet<Store> Stores { get; set; }
+        public DbSet<PurchaseDetail> PurchaseDetails { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Subcategory> Subcategories { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -29,7 +29,7 @@ namespace PersonalFinanceDB2
                 "Database=personalFinanceDB2;Trusted_Connection=True;");
             }
         }
-        
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Receipt>().HasKey(r => r.ReceiptID);
@@ -65,10 +65,22 @@ namespace PersonalFinanceDB2
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryID)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.Subcategory)
+                .WithMany(s => s.Products)
+                .HasForeignKey(p => p.SubcategoryID)
+                .OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<Product>()
                 .Property(p => p.CategoryID)
                 .IsRequired(false);
+
+            //Subcategory
+            modelBuilder.Entity<Subcategory>()
+                .HasOne(s => s.Category)
+                .WithMany(c => c.Subcategories)
+                .HasForeignKey(s => s.CategoryID)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using PersonalFinanceDB2;
+using PersonalFinanceDB2.Data;
 
 [TestFixture]
 public class FunctionalTests
@@ -28,11 +29,11 @@ public class FunctionalTests
                 DateTime = "2020-12-30",
                 TotalAmount = "15.50"
             };
-            
+
             var tempDetails = new List<TempDetails>
             {
-                new TempDetails { ProductName = "Milk", Quantity = "2", Amount = "10" },
-                new TempDetails { ProductName = "Bread", Quantity = "1", Amount = "5.50" }
+                new TempDetails { ProductName = "Milk", Quantity = "2", Amount = "10", Category = "Groceries", Subcategory = "Milk" },
+                new TempDetails { ProductName = "Bread", Quantity = "1", Amount = "5.50", Category = "Groceries", Subcategory = "Bread" }
             };
             FinanceDb.AddFullReceipt(dbContext, tempReceipt, tempDetails);
 
@@ -47,6 +48,9 @@ public class FunctionalTests
             var products = dbContext.Products.ToList();
             Assert.That(products[0].Name, Is.EqualTo("Milk"));
             Assert.That(products[1].Name, Is.EqualTo("Bread"));
+            Assert.That(products[0].Subcategory.Name, Is.EqualTo("Milk"));
+            Assert.That(products[1].Subcategory.Name, Is.EqualTo("Bread"));
+            Assert.That(products[0].Category.Name, Is.EqualTo("Groceries"));
         }
     }
 }
