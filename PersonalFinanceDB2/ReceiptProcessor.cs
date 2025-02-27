@@ -20,6 +20,7 @@ namespace PersonalFinanceDB2
         public List<TempDetails> TempDetails { get; set; }
         public ReceiptProcessor()
         {
+            TempReceipt = new TempReceipt();
             TempDetails = new List<TempDetails>();
         }
         public void CreateReceiptByConsole()
@@ -68,71 +69,62 @@ namespace PersonalFinanceDB2
         }
         public void CreateReceiptByCSV(string filePath)
         {
-            using (var dbContext = new PersonalFinanceDbContext())
+            bool isReadingReceiptInfo = true;
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
-                using (var transaction = dbContext.Database.BeginTransaction())
+                IgnoreBlankLines = false
+            };
+
+            var reader = new StreamReader(filePath);
+            var csv = new CsvReader(reader, config);
+            Receipt newReceipt = new Receipt();
+            int detailsCounter = 0;
+
+            csv.Read();
+            while (csv.Read())
+            {
+                string[] fields = csv.Parser.Record;
+                if (string.IsNullOrWhiteSpace(fields[0]))
                 {
-                    try
+                    CheckIfProductsExist();
+                    ProcessReceipt();
+                    TempDetails.Clear();
+                    detailsCounter = 0;
+                    isReadingReceiptInfo = true;
+                    continue;
+                }
+                for (int i = 0; i < fields.Length; i++)
+                {
+                    fields[i] = fields[i].Trim();
+                }
+                
+                if (isReadingReceiptInfo)
+                {
+                    isReadingReceiptInfo = false;
+                    TempReceipt.StoreName = fields[0];
+                    TempReceipt.DateTime = fields[1];
+                    TempReceipt.TotalAmount = fields[2];
+                    Console.WriteLine($"new receipt ({fields[0]})");          //just for test, delete it
+                }
+                else
+                {
+                    TempDetails.Add(new TempDetails() 
                     {
-                        bool isReadingReceiptInfo = true;
-                        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-                        {
-                            IgnoreBlankLines = false
-                        };
-
-                        var reader = new StreamReader(filePath);
-                        var csv = new CsvReader(reader, config);
-                        Receipt newReceipt = new Receipt();
-                        int receiptID = 0;
-
-                        csv.Read();
-                        while (csv.Read())
-                        {
-                            string[] fields = csv.Parser.Record;
-                            if (string.IsNullOrWhiteSpace(fields[0]) || fields[0] == null)
-                            {
-                                isReadingReceiptInfo = true;
-                                continue;
-                            }
-                            for (int i = 0; i < fields.Length; i++)
-                            {
-                                fields[i] = fields[i].Trim();
-                            }
-
-                            if (isReadingReceiptInfo)
-                            {
-                                isReadingReceiptInfo = false;
-                                TempReceipt tempReceipt = new TempReceipt
-                                {
-                                    StoreName = fields[0],
-                                    DateTime = fields[1],
-                                    TotalAmount = fields[2]
-                                };
-                                //receiptID = FinanceRepository.AddBriefReceiptInfo(tempReceipt);
-                                Console.WriteLine($"new receipt ({fields[0]})");          //just for test, delete it
-                            }
-                            else
-                            {
-                                TempDetails tempDetails = new TempDetails
-                                {
-                                    ProductName = fields[0],
-                                    Quantity = fields[1],
-                                    Amount = fields[2]
-                                };
-                                //AddPurchaseDetail(dbContext, tempDetails, receiptID);
-                                Console.WriteLine($"new detail ({fields[0]})");          //just for test, delete it
-                            }
-                        }
-                        transaction.Commit();
-                    }
-                    catch (Exception ex)
+                        ProductName = fields[0],
+                        Quantity = fields[1],
+                        Amount = fields[2],
+                    });
+                    if (fields.Length == 5)
                     {
-                        Console.WriteLine("transaction.Rollback");          //just for test, delete it
-                        Console.WriteLine(ex);
-                        transaction.Rollback();
+                        TempDetails[detailsCounter].Category = fields[3];
+                        TempDetails[detailsCounter].Subcategory = fields[4];
                     }
+                    Console.WriteLine($"new detail ({fields[0]})");          //just for test, delete it
+                    detailsCounter++;
                 }
             }
+            CheckIfProductsExist();
+            ProcessReceipt();
         }
         private void EnterTempReceipt()
         {
@@ -180,10 +172,10 @@ namespace PersonalFinanceDB2
                         financeRepository.AddFullReceipt(TempReceipt, TempDetails);
                         transaction.Commit();
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         transaction.Rollback();
-                        throw new TransactionAbortedException("Transaction aborted");
+                        Console.WriteLine(ex);
                     }
                 }
             }
@@ -196,13 +188,25 @@ namespace PersonalFinanceDB2
                 {
                     if (dbContext.Products.FirstOrDefault(p => p.Name == TempDetails[i].ProductName) == null)
                     {
-                        if (string.IsNullOrEmpty(TempDetails[i].Category) || string.IsNullOrEmpty(TempDetails[i].Subcategory))
+                        //Console.WriteLine($"Product \"{TempDetails[i].ProductName}\" not found in database");
+                        if (string.IsNullOrEmpty(TempDetails[i].Category))
                         {
-                            Console.WriteLine($"Product \"{TempDetails[i].ProductName}\" not found in database");
-                            Console.WriteLine("Enter category name:");
+                            Console.WriteLine($"Category name for \"{TempDetails[i].ProductName}\":");
                             TempDetails[i].Category = Console.ReadLine();
-                            Console.WriteLine("Enter subcategory name:");
+                            if (TempDetails[i].Category == string.Empty)
+                            {
+                                TempDetails[i].Category = "UNCATEGORIZED";
+                            }
+                           
+                        }
+                        if (string.IsNullOrEmpty(TempDetails[i].Subcategory))
+                        {
+                            Console.WriteLine($"Subcategory name for \"{TempDetails[i].ProductName}\":");
                             TempDetails[i].Subcategory = Console.ReadLine();
+                            if (TempDetails[i].Subcategory == string.Empty)
+                            {
+                                TempDetails[i].Subcategory = "UNCATEGORIZED";
+                            }
                         }
                     }
                 }

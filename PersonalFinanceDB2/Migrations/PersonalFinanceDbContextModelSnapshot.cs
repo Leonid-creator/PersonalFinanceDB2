@@ -36,7 +36,7 @@ namespace PersonalFinanceDB2.Migrations
 
                     b.HasKey("CategoryID");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("PersonalFinanceDB2.Product", b =>
@@ -64,7 +64,7 @@ namespace PersonalFinanceDB2.Migrations
 
                     b.HasIndex("SubcategoryID");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("PersonalFinanceDB2.PurchaseDetail", b =>
@@ -85,7 +85,7 @@ namespace PersonalFinanceDB2.Migrations
 
                     b.HasIndex("ProductID");
 
-                    b.ToTable("PurchaseDetails");
+                    b.ToTable("PurchaseDetails", (string)null);
                 });
 
             modelBuilder.Entity("PersonalFinanceDB2.Receipt", b =>
@@ -112,7 +112,7 @@ namespace PersonalFinanceDB2.Migrations
 
                     b.HasIndex("StoreID");
 
-                    b.ToTable("Receipts");
+                    b.ToTable("Receipts", (string)null);
                 });
 
             modelBuilder.Entity("PersonalFinanceDB2.Store", b =>
@@ -129,7 +129,7 @@ namespace PersonalFinanceDB2.Migrations
 
                     b.HasKey("StoreID");
 
-                    b.ToTable("Stores");
+                    b.ToTable("Stores", (string)null);
                 });
 
             modelBuilder.Entity("PersonalFinanceDB2.Subcategory", b =>
@@ -151,7 +151,7 @@ namespace PersonalFinanceDB2.Migrations
 
                     b.HasIndex("CategoryID");
 
-                    b.ToTable("Subcategories");
+                    b.ToTable("Subcategories", (string)null);
                 });
 
             modelBuilder.Entity("PersonalFinanceDB2.Product", b =>

@@ -19,20 +19,27 @@ namespace PersonalFinanceDB2
         public static void Main(string[] args)
         {
             ReceiptProcessor receiptProcessor = new ReceiptProcessor();
+            string csvPath = "E:\\Projects\\PersonalFinance\\Receipts.csv";
 
-            receiptProcessor.CreateReceiptByConsole();
+            Console.WriteLine("Personal Finance Data Base v1.0");
+            Console.WriteLine($"To process the CSV file it must be located here: {csvPath}");
+            Console.WriteLine("Select an action:");
+            Console.WriteLine("1 - Create Receipt By Console");
+            Console.WriteLine("2 - Create Receipt By CSV");
+            int action = 0;
+            action = int.Parse(Console.ReadLine());
 
-            //string filePath = "E:\\Projects\\PersonalFinance\\3Receipts.csv";
-            //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptLidl.csv";
-            //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptTesco.csv";
-            //string filePath = "E:\\Projects\\PersonalFinance\\ReceiptPenneys.csv";
-            //string filePath = "E:\\Projects\\PersonalFinance\\WrongReceiptPenneys.csv";
-            //FinanceDb.CreateReceiptByCSV(filePath);
+            if (action == 1)
+            {
+                receiptProcessor.CreateReceiptByConsole();
+            } 
+            else if (action == 2)
+            {
+                receiptProcessor.CreateReceiptByCSV(csvPath);
+            }
 
+            Console.WriteLine("Press ENTER to exit");
+            Console.ReadLine();
         }
     }
 }
-
-//to do:
-//1. Rebuild CreateReceiptByCSV() method
-//
