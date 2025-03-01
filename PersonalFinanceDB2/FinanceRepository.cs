@@ -27,7 +27,7 @@ namespace PersonalFinanceDB2
         {
             if (tempReceipt.StoreName == null || tempReceipt.TotalAmount == null || tempReceipt.DateTime == null)
             {
-                throw new ArgumentNullException("AddBriefReceiptInfo");
+                throw new ArgumentNullException("Exception occurred in AddBriefReceiptInfo");
             }
             else
             {
@@ -40,8 +40,8 @@ namespace PersonalFinanceDB2
                 Receipt newReceipt = new Receipt()
                 {
                     StoreID = store.StoreID,
-                    DateTime = Convert.ToDateTime(tempReceipt.DateTime),
-                    TotalAmount = decimal.Parse(tempReceipt.TotalAmount)
+                    DateTime = tempReceipt.DateTime,
+                    TotalAmount = tempReceipt.TotalAmount
                 };
                 var existingReceipt = DbContext.Receipts.FirstOrDefault(r => r.StoreID == store.StoreID
                                                                         && r.DateTime == newReceipt.DateTime
@@ -65,22 +65,22 @@ namespace PersonalFinanceDB2
         {
             if (tempDetails.ProductName == null || tempDetails.Quantity == null || tempDetails.Amount == null)
             {
-                throw new ArgumentNullException("AddPurchaseDetail");
+                throw new ArgumentNullException("Exception occurred in AddPurchaseDetail");
             }
             else
             {
-                Product product = DbContext.Products.FirstOrDefault(s => s.Name == tempDetails.ProductName);
-                if (product == null)
+                Product newProduct = DbContext.Products.FirstOrDefault(s => s.Name == tempDetails.ProductName);
+                if (newProduct == null)
                 {
-                    product = AddProduct(tempDetails);
+                    newProduct = AddProduct(tempDetails);
                 }
 
                 PurchaseDetail newPurchaseDetail = new PurchaseDetail
                 {
                     ReceiptID = receiptID,
-                    ProductID = product.ProductID,
-                    Quantity = int.Parse(tempDetails.Quantity),
-                    Amount = decimal.Parse(tempDetails.Amount)
+                    ProductID = newProduct.ProductID,
+                    Quantity = tempDetails.Quantity,
+                    Amount = tempDetails.Amount
                 };
                 DbContext.PurchaseDetails.Add(newPurchaseDetail);
             }
@@ -89,7 +89,7 @@ namespace PersonalFinanceDB2
         {
             if (storeName == null)
             {
-                throw new ArgumentNullException("AddStore");
+                throw new ArgumentNullException("Exception occurred in AddStore");
             }
             else
             {
@@ -103,7 +103,7 @@ namespace PersonalFinanceDB2
         {
             if (tempDetails.ProductName == null || tempDetails.Category == null || tempDetails.Subcategory == null)
             {
-                throw new ArgumentNullException("AddProduct");
+                throw new ArgumentNullException("Exception occurred in AddProduct");
             }
             else
             {
@@ -128,7 +128,7 @@ namespace PersonalFinanceDB2
         {
             if (subcategory == null || category == null)
             {
-                throw new ArgumentNullException("AddSubcategory");
+                throw new ArgumentNullException("Exception occurred in AddSubcategory");
             }
             else
             {
@@ -152,7 +152,7 @@ namespace PersonalFinanceDB2
         {
             if (category == null)
             {
-                throw new ArgumentNullException("AddCategory");
+                throw new ArgumentNullException("Exception occurred in AddCategory");
             }
             else
             {

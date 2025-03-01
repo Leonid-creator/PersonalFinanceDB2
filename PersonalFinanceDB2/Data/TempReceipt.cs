@@ -9,7 +9,7 @@ namespace PersonalFinanceDB2.Data
     public class TempReceipt
     {
         public string StoreName { get; set; }
-        public string DateTime { get; set; }
-        public string TotalAmount { get; set; }
+        public DateTime DateTime { get; set; }
+        public decimal TotalAmount { get; set; }
     }
 }

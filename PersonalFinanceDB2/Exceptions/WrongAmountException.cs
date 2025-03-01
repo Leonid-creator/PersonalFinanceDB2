@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace PersonalFinanceDB2.Exceptions
 {
-    internal class DuplicateReceiptException : Exception
+    internal class WrongAmountException : Exception
     {
-        public DuplicateReceiptException() { }
-        public DuplicateReceiptException(string message)
+        public WrongAmountException() { }
+        public WrongAmountException(string message) 
         {
             Console.WriteLine(message);
         }

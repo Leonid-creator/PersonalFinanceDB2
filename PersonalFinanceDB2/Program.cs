@@ -21,7 +21,7 @@ namespace PersonalFinanceDB2
             ReceiptProcessor receiptProcessor = new ReceiptProcessor();
             string csvPath = "E:\\Projects\\PersonalFinance\\Receipts.csv";
 
-            Console.WriteLine("Personal Finance Data Base v1.0");
+            Console.WriteLine("Personal Finance Data Base v1.01");
             Console.WriteLine($"To process the CSV file it must be located here: {csvPath}");
             Console.WriteLine("Select an action:");
             Console.WriteLine("1 - Create Receipt By Console");

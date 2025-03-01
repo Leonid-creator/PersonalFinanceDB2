@@ -10,8 +10,8 @@ namespace PersonalFinanceDB2.Data
     public class TempDetails
     {
         public string ProductName { get; set; }
-        public string Quantity { get; set; }
-        public string Amount { get; set; }
+        public int Quantity { get; set; }
+        public decimal Amount { get; set; }
         public string Category { get; set; }
         public string Subcategory { get; set; }
     }

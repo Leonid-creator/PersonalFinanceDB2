@@ -11,6 +11,7 @@ using CsvHelper.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PersonalFinanceDB2.Data;
+using PersonalFinanceDB2.Exceptions;
 
 namespace PersonalFinanceDB2
 {
@@ -102,8 +103,8 @@ namespace PersonalFinanceDB2
                 {
                     isReadingReceiptInfo = false;
                     TempReceipt.StoreName = fields[0];
-                    TempReceipt.DateTime = fields[1];
-                    TempReceipt.TotalAmount = fields[2];
+                    TempReceipt.DateTime = Convert.ToDateTime(fields[1]);
+                    TempReceipt.TotalAmount = Convert.ToDecimal(fields[2]);
                     Console.WriteLine($"new receipt ({fields[0]})");          //just for test, delete it
                 }
                 else
@@ -111,8 +112,8 @@ namespace PersonalFinanceDB2
                     TempDetails.Add(new TempDetails() 
                     {
                         ProductName = fields[0],
-                        Quantity = fields[1],
-                        Amount = fields[2],
+                        Quantity = Convert.ToInt32(fields[1]),
+                        Amount = Convert.ToDecimal(fields[2])
                     });
                     if (fields.Length == 5)
                     {
@@ -129,15 +130,15 @@ namespace PersonalFinanceDB2
         private void EnterTempReceipt()
         {
             TempReceipt.StoreName = GetInput("Store name:");
-            TempReceipt.DateTime = GetInput("Date and time:");
-            TempReceipt.TotalAmount = GetInput("Total amount:");
+            TempReceipt.DateTime = Convert.ToDateTime(GetInput("Date and time:"));
+            TempReceipt.TotalAmount = Convert.ToDecimal(GetInput("Total amount:"));
         }
         private static TempDetails EnterTempDetails()
         {
             TempDetails tempDetails = new TempDetails();
             tempDetails.ProductName = GetInput("Product name:");
-            tempDetails.Quantity = GetInput("Quantity:");
-            tempDetails.Amount = GetInput("Amount:");
+            tempDetails.Quantity = Convert.ToInt32(GetInput("Quantity:"));
+            tempDetails.Amount = Convert.ToDecimal(GetInput("Amount:"));
             tempDetails.Category = GetInput("Category:");
             if (tempDetails.Category != string.Empty)
             {
@@ -162,6 +163,7 @@ namespace PersonalFinanceDB2
         }
         private void ProcessReceipt()
         {
+            CheckTotalAmount();
             using (PersonalFinanceDbContext dbContext = new PersonalFinanceDbContext())
             {
                 using (var transaction = dbContext.Database.BeginTransaction())
@@ -210,6 +212,14 @@ namespace PersonalFinanceDB2
                         }
                     }
                 }
+            }
+        }
+        public void CheckTotalAmount()
+        {
+            decimal sumAmountByDetails = TempDetails.Sum(s => s.Amount);
+            if (sumAmountByDetails != TempReceipt.TotalAmount)
+            {
+                throw new WrongAmountException();
             }
         }
     }
