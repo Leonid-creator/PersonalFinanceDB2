@@ -9,9 +9,9 @@ namespace PersonalFinanceDB2.Exceptions
     internal class WrongAmountException : Exception
     {
         public WrongAmountException() { }
-        public WrongAmountException(string message) 
+        public WrongAmountException(decimal diffAmount) 
         {
-            Console.WriteLine(message);
+            Console.WriteLine($"Error! Total amount are not equal to sum of amounts in Details ({diffAmount})");
         }
     }
 }

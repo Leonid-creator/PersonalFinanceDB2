@@ -1,4 +1,6 @@
 ﻿
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
 using PersonalFinanceDB2.Data;
 
 namespace PersonalFinanceDB2
@@ -25,7 +27,7 @@ namespace PersonalFinanceDB2
         }
         private int AddBriefReceiptInfo(TempReceipt tempReceipt)
         {
-            if (tempReceipt.StoreName == null || tempReceipt.TotalAmount == null || tempReceipt.DateTime == null)
+            if (tempReceipt.StoreName.IsNullOrEmpty() || tempReceipt.TotalAmount == null || tempReceipt.DateTime == null)
             {
                 throw new ArgumentNullException("Exception occurred in AddBriefReceiptInfo");
             }
@@ -34,7 +36,7 @@ namespace PersonalFinanceDB2
                 Store store = DbContext.Stores.FirstOrDefault(s => s.Name == tempReceipt.StoreName);
                 if (store == null)
                 {
-                    store = AddStore(tempReceipt.StoreName);
+                    throw new Exception("Unknown store name!");
                 }
 
                 Receipt newReceipt = new Receipt()
@@ -80,12 +82,13 @@ namespace PersonalFinanceDB2
                     ReceiptID = receiptID,
                     ProductID = newProduct.ProductID,
                     Quantity = tempDetails.Quantity,
-                    Amount = tempDetails.Amount
+                    Amount = tempDetails.Amount,
+                    Discount = tempDetails.Discount
                 };
                 DbContext.PurchaseDetails.Add(newPurchaseDetail);
             }
         }
-        private Store AddStore(string storeName)
+        public Store AddNewStore(string storeName)
         {
             if (storeName == null)
             {
@@ -107,10 +110,11 @@ namespace PersonalFinanceDB2
             }
             else
             {
-                Subcategory subcategory = DbContext.Subcategories.FirstOrDefault(s => s.Name == tempDetails.Subcategory);
+                Category category = DbContext.Categories.FirstOrDefault(c => c.Name == tempDetails.Category);
+                Subcategory subcategory = DbContext.Subcategories.FirstOrDefault(s => s.Name == tempDetails.Subcategory && s.CategoryID == category.CategoryID);
                 if (subcategory == null)
                 {
-                    subcategory = AddSubcategory(tempDetails.Subcategory, tempDetails.Category);
+                    throw new Exception($"Unknown subcategory \"{tempDetails.Subcategory}\" with category \"{tempDetails.Category}\"!");
                 }
 
                 Product newProduct = new Product
@@ -124,7 +128,7 @@ namespace PersonalFinanceDB2
                 return newProduct;
             } 
         }
-        public Subcategory AddSubcategory(string subcategory, string category)
+        public Subcategory AddNewSubcategory(string category, string subcategory)
         {
             if (subcategory == null || category == null)
             {
@@ -135,7 +139,7 @@ namespace PersonalFinanceDB2
                 Category newCategory = DbContext.Categories.FirstOrDefault(c => c.Name == category);
                 if (newCategory == null)
                 {
-                    newCategory = AddCategory(category);
+                    throw new Exception("Unknown category!");
                 }
 
                 Subcategory newSubcategory = new Subcategory
@@ -148,7 +152,7 @@ namespace PersonalFinanceDB2
                 return newSubcategory;
             }
         }
-        public Category AddCategory(string category)
+        public Category AddNewCategory(string category)
         {
             if (category == null)
             {

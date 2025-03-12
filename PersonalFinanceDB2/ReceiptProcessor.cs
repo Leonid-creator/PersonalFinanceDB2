@@ -113,12 +113,17 @@ namespace PersonalFinanceDB2
                     {
                         ProductName = fields[0],
                         Quantity = Convert.ToInt32(fields[1]),
-                        Amount = Convert.ToDecimal(fields[2])
+                        Amount = Convert.ToDecimal(fields[2]),
+                        Discount = Convert.ToDecimal(fields[3])
                     });
-                    if (fields.Length == 5)
+                    if (TempDetails[detailsCounter].Discount > 0)
                     {
-                        TempDetails[detailsCounter].Category = fields[3];
-                        TempDetails[detailsCounter].Subcategory = fields[4];
+                        throw new WrongDiscountException(TempDetails[detailsCounter].ProductName);
+                    }
+                    if (fields.Length == 6)
+                    {
+                        TempDetails[detailsCounter].Category = fields[4];
+                        TempDetails[detailsCounter].Subcategory = fields[5];
                     }
                     Console.WriteLine($"new detail ({fields[0]})");          //just for test, delete it
                     detailsCounter++;
@@ -139,6 +144,12 @@ namespace PersonalFinanceDB2
             tempDetails.ProductName = GetInput("Product name:");
             tempDetails.Quantity = Convert.ToInt32(GetInput("Quantity:"));
             tempDetails.Amount = Convert.ToDecimal(GetInput("Amount:"));
+            string discount = GetInput("Discount:");
+            if (discount.IsNullOrEmpty())
+            {
+                discount = "0";
+            }
+            tempDetails.Discount = Convert.ToDecimal(discount);
             tempDetails.Category = GetInput("Category:");
             if (tempDetails.Category != string.Empty)
             {
@@ -164,6 +175,8 @@ namespace PersonalFinanceDB2
         private void ProcessReceipt()
         {
             CheckTotalAmount();
+            CheckIfStoreExist();
+
             using (PersonalFinanceDbContext dbContext = new PersonalFinanceDbContext())
             {
                 using (var transaction = dbContext.Database.BeginTransaction())
@@ -199,8 +212,8 @@ namespace PersonalFinanceDB2
                             {
                                 TempDetails[i].Category = "UNCATEGORIZED";
                             }
-                           
                         }
+                        CheckIfCategoryExist(i);
                         if (string.IsNullOrEmpty(TempDetails[i].Subcategory))
                         {
                             Console.WriteLine($"Subcategory name for \"{TempDetails[i].ProductName}\":");
@@ -210,16 +223,97 @@ namespace PersonalFinanceDB2
                                 TempDetails[i].Subcategory = "UNCATEGORIZED";
                             }
                         }
+                        CheckIfSubcategoryExist(i);
                     }
                 }
             }
         }
+        public bool CheckIfStoreExist()
+        {
+            using (PersonalFinanceDbContext dbContext = new PersonalFinanceDbContext())
+            {
+                if (dbContext.Stores.FirstOrDefault(s => s.Name == TempReceipt.StoreName) != null)
+                {
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"Unknown store \"{TempReceipt.StoreName}\"");
+                    Console.WriteLine("Add new store? (y/n)");
+                    string option = Console.ReadLine();
+                    if (option == "y")
+                    {
+                        FinanceRepository financeRepository = new FinanceRepository(dbContext);
+                        financeRepository.AddNewStore(TempReceipt.StoreName);
+                        return true;
+                    }
+                    return false;
+                }
+            }
+        }
+        public bool CheckIfCategoryExist(int prodNum)
+        {
+            using (PersonalFinanceDbContext dbContext = new PersonalFinanceDbContext())
+            {
+                //for (int i = 0; i < TempDetails.Count; i++)
+                //{
+                    if (dbContext.Categories.FirstOrDefault(c => c.Name == TempDetails[prodNum].Category) == null)
+                    {
+                        Console.WriteLine($"Unknown category \"{TempDetails[prodNum].Category}\"");
+                        Console.WriteLine("Add new category? (y/n)");
+                        string option = Console.ReadLine();
+                        if (option == "y")
+                        {
+                            FinanceRepository financeRepository = new FinanceRepository(dbContext);
+                            financeRepository.AddNewCategory(TempDetails[prodNum].Category);
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                //}
+                return true;
+            }
+        }
+        public bool CheckIfSubcategoryExist(int prodNum)
+        {
+            using (PersonalFinanceDbContext dbContext = new PersonalFinanceDbContext())
+            {
+                FinanceRepository financeRepository = new FinanceRepository(dbContext);
+                //for (int i = 0; i < TempDetails.Count; i++)
+                //{
+                    Category category = dbContext.Categories.FirstOrDefault(c => c.Name == TempDetails[prodNum].Category);
+                    if(category == null)
+                    {
+                        throw new NullReferenceException($"Unknown category \"{TempDetails[prodNum].Category}\"");
+                    }
+                    Subcategory subcategory = dbContext.Subcategories.FirstOrDefault(s => s.Name == TempDetails[prodNum].Subcategory && s.CategoryID == category.CategoryID);
+                    if (subcategory == null)
+                    {
+                        Console.WriteLine($"Unknown subcategory \"{TempDetails[prodNum].Subcategory}\"");
+                        Console.WriteLine("Add new subcategory? (y/n)");
+                        string option = Console.ReadLine();
+                        if (option == "y")
+                        {
+                            financeRepository.AddNewSubcategory(TempDetails[prodNum].Category, TempDetails[prodNum].Subcategory);
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                //}
+                return true;
+            }
+        }
         public void CheckTotalAmount()
         {
-            decimal sumAmountByDetails = TempDetails.Sum(s => s.Amount);
-            if (sumAmountByDetails != TempReceipt.TotalAmount)
+            decimal sumAmountByDetails = TempDetails.Sum(s => s.Amount * s.Quantity + s.Discount);
+            decimal diffAmount = TempReceipt.TotalAmount - sumAmountByDetails;
+            if (diffAmount != 0)
             {
-                throw new WrongAmountException();
+                throw new WrongAmountException(diffAmount);
             }
         }
     }
