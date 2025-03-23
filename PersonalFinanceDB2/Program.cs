@@ -21,28 +21,8 @@ namespace PersonalFinanceDB2
     {
         public static void Main(string[] args)
         {
-            //var configuration = new ConfigurationBuilder()
-            //.SetBasePath(Directory.GetCurrentDirectory())
-            //.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            //.Build();
-
-            //var connectionString = configuration.GetConnectionString("DefaultConnection");
-
-            //var services = new ServiceCollection();
-            //services.AddDbContext<PersonalFinanceDbContext>(options =>
-            //    options.UseSqlServer(connectionString));
-
-            //var serviceProvider = services.BuildServiceProvider();
-
-            //using (var context = serviceProvider.GetRequiredService<PersonalFinanceDbContext>())
-            //{
-            //    Console.WriteLine("Подключение к БД успешно!");
-            //}
-
-            //-----------------------------------------------------------------------------------------
-
             ReceiptProcessor receiptProcessor = new ReceiptProcessor();
-            string appVersion = "v1.02";
+            string appVersion = "v1.03";
             string csvPath = "E:\\Projects\\PersonalFinance\\Receipts.csv";
 
             Console.WriteLine($"Personal Finance Data Base {appVersion}");

@@ -11,5 +11,6 @@ namespace PersonalFinanceDB2.Data
         public string StoreName { get; set; }
         public DateTime DateTime { get; set; }
         public decimal TotalAmount { get; set; }
+        public decimal ReceiptDiscount { get; set; }
     }
 }

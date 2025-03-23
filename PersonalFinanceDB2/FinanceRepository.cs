@@ -27,9 +27,9 @@ namespace PersonalFinanceDB2
         }
         private int AddBriefReceiptInfo(TempReceipt tempReceipt)
         {
-            if (tempReceipt.StoreName.IsNullOrEmpty() || tempReceipt.TotalAmount == null || tempReceipt.DateTime == null)
+            if (tempReceipt.StoreName.IsNullOrEmpty() || tempReceipt.TotalAmount == null || tempReceipt.DateTime == null || tempReceipt.ReceiptDiscount == null)
             {
-                throw new ArgumentNullException("Exception occurred in AddBriefReceiptInfo");
+                throw new ArgumentNullException("AddBriefReceiptInfo() cannot accept \"null\"");
             }
             else
             {
@@ -43,7 +43,8 @@ namespace PersonalFinanceDB2
                 {
                     StoreID = store.StoreID,
                     DateTime = tempReceipt.DateTime,
-                    TotalAmount = tempReceipt.TotalAmount
+                    TotalAmount = tempReceipt.TotalAmount,
+                    ReceiptDiscount = tempReceipt.ReceiptDiscount
                 };
                 var existingReceipt = DbContext.Receipts.FirstOrDefault(r => r.StoreID == store.StoreID
                                                                         && r.DateTime == newReceipt.DateTime

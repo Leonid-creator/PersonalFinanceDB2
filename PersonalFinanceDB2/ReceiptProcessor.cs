@@ -87,6 +87,7 @@ namespace PersonalFinanceDB2
                 string[] fields = csv.Parser.Record;
                 if (string.IsNullOrWhiteSpace(fields[0]))
                 {
+                    CheckTotalAmount();
                     CheckIfProductsExist();
                     ProcessReceipt();
                     TempDetails.Clear();
@@ -105,6 +106,7 @@ namespace PersonalFinanceDB2
                     TempReceipt.StoreName = fields[0];
                     TempReceipt.DateTime = Convert.ToDateTime(fields[1]);
                     TempReceipt.TotalAmount = Convert.ToDecimal(fields[2]);
+                    TempReceipt.ReceiptDiscount = Convert.ToDecimal(fields[3]);
                     Console.WriteLine($"new receipt ({fields[0]})");          //just for test, delete it
                 }
                 else
@@ -129,6 +131,7 @@ namespace PersonalFinanceDB2
                     detailsCounter++;
                 }
             }
+            CheckTotalAmount();
             CheckIfProductsExist();
             ProcessReceipt();
         }
@@ -174,8 +177,12 @@ namespace PersonalFinanceDB2
         }
         private void ProcessReceipt()
         {
-            CheckTotalAmount();
-            CheckIfStoreExist();
+            
+            if (!CheckIfStoreExist())
+            {
+                throw new Exception("Store does not exist!");
+            }
+            
 
             using (PersonalFinanceDbContext dbContext = new PersonalFinanceDbContext())
             {
@@ -310,7 +317,7 @@ namespace PersonalFinanceDB2
         public void CheckTotalAmount()
         {
             decimal sumAmountByDetails = TempDetails.Sum(s => s.Amount * s.Quantity + s.Discount);
-            decimal diffAmount = TempReceipt.TotalAmount - sumAmountByDetails;
+            decimal diffAmount = TempReceipt.TotalAmount - TempReceipt.ReceiptDiscount - sumAmountByDetails;
             if (diffAmount != 0)
             {
                 throw new WrongAmountException(diffAmount);

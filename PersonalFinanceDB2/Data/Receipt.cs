@@ -6,11 +6,14 @@ namespace PersonalFinanceDB2.Data
     public class Receipt
     {
         public int ReceiptID { get; set; }
+        public int StoreID { get; set; }
         public DateTime DateTime { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
-        public int StoreID { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal ReceiptDiscount { get; set; }
         public string? Comment { get; set; }
 
         [ForeignKey("StoreID")]
